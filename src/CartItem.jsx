@@ -7,29 +7,37 @@ const CartItem = ({ onContinueShopping }) => {
   const cart = useSelector(state => state.cart.items);
   const dispatch = useDispatch();
 
-  // Calculate total amount for all products in the cart
   const calculateTotalAmount = () => {
- 
+    return cart.reduce((acc, cartItem) => {
+        return acc + (cartItem.quantity * parseFloat(cartItem.cost.substring(1)));
+    }, 0);
   };
 
   const handleContinueShopping = (e) => {
-   
+    onContinueShopping(e);
   };
 
-
-
   const handleIncrement = (item) => {
+    // FIX: Send clean object variables, don't use quantity++ (mutation)
+    dispatch(updateQuantity({ name: item.name, quantity: item.quantity + 1 }));
   };
 
   const handleDecrement = (item) => {
-   
+    if (item.quantity > 1) {
+      // FIX: Send clean object variables, don't use quantity-- (mutation)
+      dispatch(updateQuantity({ name: item.name, quantity: item.quantity - 1 }));
+    } else {
+      dispatch(removeItem(item.name)); // FIX: Pass name string matching your slice definition
+    }
   };
 
   const handleRemove = (item) => {
+    dispatch(removeItem(item.name)); // FIX: Pass name string matching your slice definition
   };
 
-  // Calculate total cost based on quantity for an item
   const calculateTotalCost = (item) => {
+    // FIX: Changed .string(1) to .substring(1) to avoid breakdown crashes
+    return item.quantity * parseFloat(item.cost.substring(1));
   };
 
   return (
@@ -53,7 +61,6 @@ const CartItem = ({ onContinueShopping }) => {
           </div>
         ))}
       </div>
-      <div style={{ marginTop: '20px', color: 'black' }} className='total_cart_amount'></div>
       <div className="continue_shopping_btn">
         <button className="get-started-button" onClick={(e) => handleContinueShopping(e)}>Continue Shopping</button>
         <br />
@@ -64,5 +71,3 @@ const CartItem = ({ onContinueShopping }) => {
 };
 
 export default CartItem;
-
-

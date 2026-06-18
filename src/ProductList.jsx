@@ -1,9 +1,26 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect ,useMemo} from 'react';
 import './ProductList.css'
 import CartItem from './CartItem';
+import { useDispatch, useSelector } from 'react-redux';
+import { addItem } from './CartSlice';
 function ProductList({ onHomeClick }) {
     const [showCart, setShowCart] = useState(false);
     const [showPlants, setShowPlants] = useState(false); // State to control the visibility of the About Us page
+    const [addedToCart, setAddedToCart] = useState({});
+    // 1. Get the live cart items from Redux
+const cartItems = useSelector(state => state.cart.items);
+
+// 1. Make the checklist keys completely lowercase and trimmed
+const cartChecklist = useMemo(() => {
+    const stateObj = {};
+    cartItems.forEach(item => {
+        if (item && item.name) {
+            const cleanName = item.name.toLowerCase().trim();
+            stateObj[cleanName] = true;
+        }
+    });
+    return stateObj;
+}, [cartItems]);
 
     const plantsArray = [
         {
@@ -232,7 +249,8 @@ function ProductList({ onHomeClick }) {
         fontSize: '30px',
         textDecoration: 'none',
     }
-
+    const dispatch = useDispatch();
+    const totalItemsCount = cartItems.reduce((total, item) => total + item.quantity, 0);
     const handleHomeClick = (e) => {
         e.preventDefault();
         onHomeClick();
@@ -252,6 +270,10 @@ function ProductList({ onHomeClick }) {
         e.preventDefault();
         setShowCart(false);
     };
+    const handleAddToCart = (product) => {
+        dispatch(addItem(product));
+       
+    };
     return (
         <div>
             <div className="navbar" style={styleObj}>
@@ -268,12 +290,59 @@ function ProductList({ onHomeClick }) {
 
                 </div>
                 <div style={styleObjUl}>
-                    <div> <a href="#" onClick={(e) => handlePlantsClick(e)} style={styleA}>Plants</a></div>
-                    <div> <a href="#" onClick={(e) => handleCartClick(e)} style={styleA}><h1 className='cart'><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" id="IconChangeColor" height="68" width="68"><rect width="156" height="156" fill="none"></rect><circle cx="80" cy="216" r="12"></circle><circle cx="184" cy="216" r="12"></circle><path d="M42.3,72H221.7l-26.4,92.4A15.9,15.9,0,0,1,179.9,176H84.1a15.9,15.9,0,0,1-15.4-11.6L32.5,37.8A8,8,0,0,0,24.8,32H8" fill="none" stroke="#faf9f9" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" id="mainIconPathAttribute"></path></svg></h1></a></div>
+                    <div><a href="#" onClick={(e) => handlePlantsClick(e)} style={styleA}>Plants</a></div>
+                    <div> 
+                        <a href="#" onClick={(e) => handleCartClick(e)} style={styleA}>
+                            <h1 className='cart' style={{ display: 'flex', alignItems: 'center', position: 'relative' }}>
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" id="IconChangeColor" height="68" width="68">
+                                    <rect width="156" height="156" fill="none"></rect>
+                                    <circle cx="80" cy="216" r="12"></circle>
+                                    <circle cx="184" cy="216" r="12"></circle>
+                                    <path d="M42.3,72H221.7l-26.4,92.4A15.9,15.9,0,0,1,179.9,176H84.1a15.9,15.9,0,0,1-15.4-11.6L32.5,37.8A8,8,0,0,0,24.8,32H8" fill="none" stroke="#faf9f9" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" id="mainIconPathAttribute"></path>
+                                </svg>
+                                {/* 3. Dynamic Badge Implementation */}
+                                {totalItemsCount > 0 && (
+                                    <span className="cart-badge" style={{
+                                        position: 'absolute', top: '5px', right: '-10px',
+                                        backgroundColor: 'red', color: 'white', borderRadius: '50%',
+                                        padding: '2px 8px', fontSize: '14px', fontWeight: 'bold'
+                                    }}>{totalItemsCount}</span>
+                                )}
+                            </h1>
+                        </a>
+                    </div>
                 </div>
             </div>
             {!showCart ? (
                 <div className="product-grid">
+                    {plantsArray.map((category, index) => (
+                        <div key={index}>
+                            <h1><div>{category.category}</div></h1>
+                            <div className="product-list">
+                                {category.plants.map((plant, plantIndex) => (
+                                    <div className="product-card" key={plantIndex}>
+                                        <img className="product-image" src={plant.image} alt={plant.name}/>
+                                        <div className='prodcut-title'>{plant.name}</div>
+                                        <div className="produuct-description">{plant.description}</div>
+                                        <div className="product-cost">{plant.cost}</div>
+                                        
+                                        {/* 4. Conditional Button Text and Disabled State */}
+                                        <button 
+                                            className="product-button"
+                                            disabled={addedToCart[plant.name]}
+                                            onClick={() => handleAddToCart(plant)}
+                                            style={{ 
+                                                backgroundColor: cartChecklist[plant.name.toLowerCase().trim()] ? '#888888' : '#4CAF50',                                                color: 'white',
+                                                cursor: cartChecklist[plant.name.toLowerCase().trim()] ? 'not-allowed' : 'pointer',
+                                                color:'white'     
+                                                     }}
+                                        >
+                                        {cartChecklist[plant.name.toLowerCase().trim()] ? 'Added to Cart' : 'Add to Cart'}                                        </button> 
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    ))}
 
 
                 </div>
